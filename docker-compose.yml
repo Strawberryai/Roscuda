@@ -1,0 +1,16 @@
+services:
+  roscuda:
+    image: fsb/roscuda
+    runtime: nvidia
+    environment:
+      - NVIDIA_DRIVER_CAPABILITIES=video,compute,utility
+      - DISPLAY=${DISPLAY} # Para las interfaces graficas
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix # Para las interfaces graficas -> Ejecutar xhost +
+      - /etc/machine-id:/etc/machine-id # Ejecutar dbus-uuidgen --ensure=/etc/machine-id en host
+      - ./docker:/docker
+    privileged: true # Acceso al hardware
+    tty: true # docker run -t
+    stdin_open: true # docker run -t
+    command: ["/bin/bash"] #["ZED_Explorer"]
+    

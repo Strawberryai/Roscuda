@@ -1,0 +1,51 @@
+# BUILDING STAGE
+FROM nvidia/cuda:12.2.2-devel-ubuntu22.04
+
+# Argumentos
+ARG USERNAME=fsb
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+ENV TZ=Europe/Spain
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Set the locale
+RUN apt-get update && apt-get install -y locales && \
+    locale-gen en_US en_US.UTF-8 && \
+    update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && \
+    export LANG=en_US.UTF-8
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Setup the sources
+RUN apt-get update && apt-get install -y software-properties-common curl && \
+    add-apt-repository universe && \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+# Instalar ROS Humble
+RUN apt-get update && apt-get upgrade -y && \
+        apt-get install -y ros-humble-desktop
+
+# Setup the ZED SDK
+RUN apt-get update -y && apt-get upgrade -y && apt-get autoremove -y && apt install -y zstd && \
+    apt-get install --no-install-recommends lsb-release wget less udev sudo apt-transport-https libqt5xml5 libxmu-dev libxi-dev -y && \
+    echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
+
+RUN apt install -y pip && pip install requests
+RUN echo 'alias hi="echo hello"' >> ~/.bashrc
+
+RUN wget -O ZED_SDK_Linux_Ubuntu22.run https://download.stereolabs.com/zedsdk/4.0/cu121/ubuntu22 && \
+    chmod +x ZED_SDK_Linux_Ubuntu22.run ; ./ZED_SDK_Linux_Ubuntu22.run silent && \
+    rm ZED_SDK_Linux_Ubuntu22.run && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create the user
+#RUN groupadd --gid $USER_GID $USERNAME && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+#USER $USERNAME
+#
+## Establece el directorio de trabajo del usuario
+#WORKDIR /home/${USERNAME}
+
+# COMMAND STAGE
+CMD /bin/bash 
+
